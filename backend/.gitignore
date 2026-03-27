@@ -1,0 +1,17 @@
+# Python / Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
+.env
+
+# Django media/uploads
+media/
+
+# Database files (if using SQLite)
+db.sqlite3
+
+# Virtual environment
+venv/
