@@ -48,7 +48,14 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -58,20 +65,24 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = 'users.User'
 # Application definition
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
     'cloudinary_storage',
+    "django.contrib.staticfiles",
     'cloudinary',
+    'corsheaders',
     "rest_framework",
     "users",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

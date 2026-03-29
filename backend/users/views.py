@@ -2,18 +2,19 @@ from rest_framework.views import APIView
 from rest_framework import generics 
 from rest_framework.generics import ListAPIView, DestroyAPIView, UpdateAPIView, CreateAPIView
 from .permissions import IsAdminUser
-from .serializers import RegisterSerializer, UserSerializer, AdminUserCreateSerializer, AdminUserUpdateSerializer
+from .serializers import RegisterSerializer, UserSerializer, AdminUserCreateSerializer, AdminUserUpdateSerializer, ProfileUpdateSerializer
 from .models import User
+from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.pagination import PageNumberPagination
 
 class RegisterView(generics.CreateAPIView):
   serializer_class = RegisterSerializer
   permission_classes = [AllowAny]
-
 
 class ProfileView(APIView):
   permission_classes = [IsAuthenticated]
@@ -26,33 +27,53 @@ class ProfileView(APIView):
 
   def patch(self, request):
     user = request.user
-    serializer = UserSerializer(user, data=request.data, partial=True)
+    serializer = ProfileUpdateSerializer(user, data=request.data, partial=True)
 
     if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
     
-    return Response(serializer.errors)
-  
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserPagination(PageNumberPagination):
+    page_size = 5
 
 class AdminUserListView(ListAPIView):
-   queryset = User.objects.all()
+   queryset = User.objects.all().order_by('-id')
    serializer_class = UserSerializer
    permission_classes = [IsAdminUser]
    filter_backends = [SearchFilter]
    search_fields = ['username', 'email']
+   pagination_class = UserPagination
+
+class AdminGetUser(generics.RetrieveAPIView):
+  queryset = User.objects.all()
+  serializer_class = UserSerializer
+  permission_classes = [IsAdminUser]
 
 class AdminCreateUser(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = AdminUserCreateSerializer
     permission_classes = [IsAdminUser]
+    
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 class AdminUpdateUser(UpdateAPIView):
    queryset = User.objects.all()
    serializer_class = AdminUserUpdateSerializer
    permission_classes = [IsAdminUser]
-
+   
 class AdminDeleteUser(DestroyAPIView):
    queryset = User.objects.all()
    serializer_class = UserSerializer
    permission_classes = [IsAdminUser]
+
+   def destroy(self, request, *args, **kwargs):
+       user = self.get_object()
+
+       if user == request.user:
+           return Response({"error": "You cannot delete yourself"}, status=400)
+
+       return super().destroy(request, *args, **kwargs)
+     
