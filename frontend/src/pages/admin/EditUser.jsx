@@ -105,7 +105,7 @@ function EditUser() {
   // ─── Loading ─────────────────────────────────────────────────────────────────
   if (fetching) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400 text-sm">Loading user data…</p>
@@ -116,8 +116,8 @@ function EditUser() {
 
   // ─── UI ──────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-10">
-      <div className="w-full max-w-lg">
+    <div className="flex flex-col items-center justify-center h-full p-6">
+     <div className="w-full max-w-lg">
 
         {/* Header */}
         <div className="mb-6">

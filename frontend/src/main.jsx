@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
       <App />
-      <ToastContainer />
+      <ToastContainer position="top-center" autoClose={700} hideProgressBar newestOnTop closeOnClick toastClassName="!rounded-xl !text-sm !font-medium !shadow-lg !text-center"/>
     </Provider>
   </StrictMode>,
 )

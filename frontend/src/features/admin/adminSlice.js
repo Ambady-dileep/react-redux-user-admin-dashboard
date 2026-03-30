@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../services/axios";
 
-// GET USERS
 export const fetchUsers = createAsyncThunk(
   "admin/fetchUsers",
   async (search = "", thunkAPI) => {
@@ -14,7 +13,6 @@ export const fetchUsers = createAsyncThunk(
   }
 );
 
-// DELETE USER
 export const deleteUser = createAsyncThunk(
   "admin/deleteUser",
   async (id, thunkAPI) => {

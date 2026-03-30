@@ -70,10 +70,16 @@ class AdminDeleteUser(DestroyAPIView):
    permission_classes = [IsAdminUser]
 
    def destroy(self, request, *args, **kwargs):
-       user = self.get_object()
+        target = self.get_object()
 
-       if user == request.user:
-           return Response({"error": "You cannot delete yourself"}, status=400)
+        if target == request.user:
+            return Response({"error": "You cannot delete your own account."}, status=400)
 
-       return super().destroy(request, *args, **kwargs)
+        if target.is_superuser:
+            return Response({"error": "Superadmin cannot be deleted."}, status=403)
+
+        if request.user.is_admin and target.is_admin:
+            return Response({"error": "Admins cannot delete other admins."}, status=403)
+
+        return super().destroy(request, *args, **kwargs)
      

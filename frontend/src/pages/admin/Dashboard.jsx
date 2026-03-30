@@ -4,9 +4,7 @@ import { fetchUsers } from "../../features/admin/adminSlice";
 
 function Dashboard() {
     const dispatch = useDispatch();
-    const { users, totalCount } = useSelector((state) => state.admin);
-
-    console.log("USERS IS:", users, typeof users, Array.isArray(users));
+    const { users } = useSelector((state) => state.admin);
 
     useEffect(() => {
         dispatch(fetchUsers());
@@ -16,26 +14,23 @@ function Dashboard() {
     const regularUsers = users?.filter((u) => !u.is_admin).length;
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold mb-6 text-slate-800">Dashboard</h2>
+        <div className="p-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">Dashboard</h2>
+            <p className="text-sm text-slate-400 mb-6">Overview of your platform.</p>
 
-            <div className="grid grid-cols-3 gap-6">
-
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-slate-500 text-sm mb-1">Total Users</h3>
-                    <p className="text-3xl font-bold text-slate-800">{totalCount}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Total Users</p>
+                    <p className="text-3xl font-bold text-slate-800">{users?.length ?? 0}</p>
                 </div>
-
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-slate-500 text-sm mb-1">Regular Users</h3>
-                    <p className="text-3xl font-bold text-slate-800">{regularUsers}</p>
+                <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Regular Users</p>
+                    <p className="text-3xl font-bold text-slate-800">{regularUsers ?? 0}</p>
                 </div>
-
-                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-slate-500 text-sm mb-1">Admin Users</h3>
-                    <p className="text-3xl font-bold text-slate-800">{adminUsers}</p>
+                <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Admin Users</p>
+                    <p className="text-3xl font-bold text-slate-800">{adminUsers ?? 0}</p>
                 </div>
-
             </div>
         </div>
     );

@@ -6,15 +6,38 @@ import { toast } from "react-toastify";
 
 function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
+  const [errors, setErrors] = useState({ username: "", password: "" });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.auth);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const validate = (field, value) => {
+    if (field === "username") {
+      if (!value.trim()) return "Username is required.";
+      if (value.trim().length < 3) return "Must be at least 3 characters.";
+    }
+    if (field === "password") {
+      if (!value) return "Password is required.";
+      if (value.length < 8) return "Must be at least 8 characters.";
+    }
+    return "";
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.username || !formData.password) { toast.error("All fields required"); return; }
+    const newErrors = {
+      username: validate("username", formData.username),
+      password: validate("password", formData.password),
+    };
+    setErrors(newErrors);
+    if (Object.values(newErrors).some(Boolean)) return;
+
     const result = await dispatch(login(formData));
     if (result.meta.requestStatus === "fulfilled") {
       toast.success("Login successful");
@@ -41,33 +64,40 @@ function Login() {
           <p className="text-sm text-gray-400 mt-1">Sign in to your account</p>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="mb-5 text-sm text-red-500 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 text-center">
-            Invalid username or password
-          </div>
-        )}
-
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-          />
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
+
+          <div>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
+              onChange={handleChange}
+              className={`w-full border rounded-2xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 transition ${
+                errors.username
+                  ? "border-red-300 focus:ring-red-100 bg-red-50"
+                  : "border-gray-200 focus:ring-blue-200 bg-gray-50"
+              }`}
+            />
+            {errors.username && <p className="text-red-500 text-xs mt-1.5 px-1">{errors.username}</p>}
+          </div>
+
+          <div>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className={`w-full border rounded-2xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 transition ${
+                errors.password
+                  ? "border-red-300 focus:ring-red-100 bg-red-50"
+                  : "border-gray-200 focus:ring-blue-200 bg-gray-50"
+              }`}
+            />
+            {errors.password && <p className="text-red-500 text-xs mt-1.5 px-1">{errors.password}</p>}
+          </div>
 
           <button
             type="submit"
@@ -78,7 +108,6 @@ function Login() {
           </button>
         </form>
 
-        {/* Register */}
         <p className="text-center text-sm text-gray-400 mt-6">
           Don't have an account?{" "}
           <Link to="/register" className="text-blue-500 hover:text-blue-600 font-medium transition">
