@@ -158,7 +158,6 @@ function Profile() {
             {loading ? "Saving..." : "Save Changes"}
           </button>
         </form>
-
       </div>
     </div>
   );

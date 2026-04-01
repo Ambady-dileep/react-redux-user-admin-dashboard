@@ -56,6 +56,7 @@ function Register() {
       const data = err?.response?.data;
       if (data?.username) setErrors((p) => ({ ...p, username: data.username[0] }));
       else if (data?.email) setErrors((p) => ({ ...p, email: data.email[0] }));
+      else if (data?.password) setErrors((p) => ({ ...p, password: data.password[0] }));
       else toast.error("Registration failed.");
     } finally {
       setLoading(false);
