@@ -4,7 +4,7 @@ import { fetchUsers } from "../../features/admin/adminSlice";
 
 function Dashboard() {
     const dispatch = useDispatch();
-    const { users } = useSelector((state) => state.admin);
+    const { users, totalCount } = useSelector((state) => state.admin);
 
     useEffect(() => {
         dispatch(fetchUsers());
@@ -21,7 +21,7 @@ function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
                     <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Total Users</p>
-                    <p className="text-3xl font-bold text-slate-800">{users?.length ?? 0}</p>
+                    <p className="text-3xl font-bold text-slate-800">{totalCount ?? 0}</p>
                 </div>
                 <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
                     <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Regular Users</p>
