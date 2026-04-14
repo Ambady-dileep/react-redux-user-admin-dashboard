@@ -3,9 +3,11 @@ import API from "../../services/axios";
 
 export const fetchUsers = createAsyncThunk(
   "admin/fetchUsers",
-  async (search = "", thunkAPI) => {
+  async ({ search = "", page = 1 } = {}, thunkAPI) => {
     try {
-      const res = await API.get(`/users/admin/users/?search=${search}`);
+      const res = await API.get(
+        `/users/admin/users/?search=${encodeURIComponent(search.trim())}&page=${page}`
+      );
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response.data);
@@ -29,6 +31,7 @@ const adminSlice = createSlice({
   name: "admin",
   initialState: {
     users: [],
+    totalCount: 0,
     loading: false,
     error: null,
   },
@@ -37,25 +40,20 @@ const adminSlice = createSlice({
     builder
       .addCase(fetchUsers.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      
-
       .addCase(fetchUsers.fulfilled, (state, action) => {
-            console.log("RAW PAYLOAD:", action.payload);
-            state.loading = false;
-            state.users = action.payload.results ?? action.payload; 
-            state.totalCount = action.payload.count ?? action.payload.length;
-        })
-
-        .addCase(fetchUsers.rejected, (state, action) => {
-            state.loading = false;
-            state.error = "Failed to fetch users"; 
-        })
-
+        state.loading = false;
+        state.users = action.payload.results ?? action.payload;
+        state.totalCount = action.payload.count ?? action.payload.length;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = "Failed to fetch users";
+      })
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.users = state.users.filter(
-          (user) => user.id !== action.payload
-        );
+        state.users = state.users.filter((user) => user.id !== action.payload);
+        state.totalCount = Math.max(0, state.totalCount - 1);
       });
   },
 });

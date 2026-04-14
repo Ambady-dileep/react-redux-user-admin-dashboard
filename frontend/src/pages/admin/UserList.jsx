@@ -1,28 +1,62 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers, deleteUser } from "../../features/admin/adminSlice";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
+const PAGE_SIZE = 5;
+
 function UserList() {
   const dispatch = useDispatch();
-  const { users, loading } = useSelector((state) => state.admin);
+  const { users, loading, totalCount } = useSelector((state) => state.admin);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch]         = useState("");
+  const [page, setPage]             = useState(1);
   const [deletingId, setDeletingId] = useState(null);
 
+  const debounceRef  = useRef(null);
+  const searchRef    = useRef("");   // tracks latest search value synchronously
+
+  // ✅ Single useEffect — both search and page are dependencies
+  // Debounce only when search changed, fire immediately when only page changed
   useEffect(() => {
-    dispatch(fetchUsers(search));
-  }, [search]);
+    clearTimeout(debounceRef.current);
+
+    const isSearchChange = searchRef.current !== search;
+    searchRef.current = search;
+
+    if (isSearchChange) {
+      // Wait 400ms before fetching so fast typing doesn't spam
+      debounceRef.current = setTimeout(() => {
+        dispatch(fetchUsers({ search, page }));
+      }, 400);
+    } else {
+      // Page button clicked — fetch immediately, no debounce needed
+      dispatch(fetchUsers({ search, page }));
+    }
+
+    return () => clearTimeout(debounceRef.current);
+  }, [search, page]);
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1);  // safe now — useEffect handles both together
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const handleDelete = async (id) => {
     setDeletingId(id);
     const result = await dispatch(deleteUser(id));
     if (result.meta.requestStatus === "fulfilled") {
       toast.success("User deleted successfully.");
+      if (users.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      } else {
+        dispatch(fetchUsers({ search, page }));
+      }
     } else {
-      const msg = result.payload?.error;
-      toast.error(msg || "Failed to delete user.");
+      toast.error(result.payload?.error || "Failed to delete user.");
     }
     setDeletingId(null);
   };
@@ -31,7 +65,9 @@ function UserList() {
     toast(
       ({ closeToast }) => (
         <div>
-          <p className="text-sm font-medium text-slate-700 mb-3">Are you sure you want to delete this user?</p>
+          <p className="text-sm font-medium text-slate-700 mb-3">
+            Are you sure you want to delete this user?
+          </p>
           <div className="flex gap-2">
             <button
               onClick={() => { closeToast(); handleDelete(id); }}
@@ -56,19 +92,17 @@ function UserList() {
 
   return (
     <div className="p-6">
-
-      {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-lg font-semibold text-slate-800">User Management</h1>
         <p className="text-sm text-slate-400 mt-1">Manage all registered users on the platform.</p>
       </div>
 
-      {/* Top Bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <input
           type="text"
           placeholder="Search users..."
-          onChange={(e) => setSearch(e.target.value)}
+          value={search}
+          onChange={handleSearchChange}
           className="flex-1 max-w-sm px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 bg-white transition"
         />
         <Link
@@ -79,9 +113,7 @@ function UserList() {
         </Link>
       </div>
 
-      {/* Card */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-
         {loading && deletingId === null ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -99,7 +131,6 @@ function UserList() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 text-xs uppercase tracking-wide">
                     <th className="px-5 py-3.5">Username</th>
@@ -107,14 +138,11 @@ function UserList() {
                     <th className="px-5 py-3.5">Actions</th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-slate-50">
                   {userList.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50 transition">
-
                       <td className="px-5 py-3.5 font-medium text-slate-700">{user.username}</td>
                       <td className="px-5 py-3.5 text-slate-400">{user.email}</td>
-
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2">
                           <Link
@@ -123,7 +151,6 @@ function UserList() {
                           >
                             Edit
                           </Link>
-
                           <button
                             onClick={() => confirmDelete(user.id)}
                             disabled={deletingId === user.id}
@@ -138,16 +165,50 @@ function UserList() {
                           </button>
                         </div>
                       </td>
-
                     </tr>
                   ))}
                 </tbody>
-
               </table>
             </div>
 
-            <div className="px-5 py-3 border-t border-slate-50 text-xs text-slate-400">
-              Showing {userList.length} user{userList.length !== 1 ? "s" : ""}
+            <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                Showing {userList.length} of {totalCount} user{totalCount !== 1 ? "s" : ""}
+              </span>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-2.5 py-1 rounded-lg text-xs border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`px-2.5 py-1 rounded-lg text-xs border transition ${
+                        p === page
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-2.5 py-1 rounded-lg text-xs border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}
