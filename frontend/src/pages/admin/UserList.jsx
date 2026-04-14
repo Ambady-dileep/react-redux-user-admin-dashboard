@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers, deleteUser } from "../../features/admin/adminSlice";
+import { fetchUsers, fetchUserStats, deleteUser } from "../../features/admin/adminSlice";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -8,17 +8,19 @@ const PAGE_SIZE = 5;
 
 function UserList() {
   const dispatch = useDispatch();
-  const { users, loading, totalCount } = useSelector((state) => state.admin);
+  const { users, loading, stats } = useSelector((state) => state.admin);
 
   const [search, setSearch]         = useState("");
   const [page, setPage]             = useState(1);
   const [deletingId, setDeletingId] = useState(null);
 
-  const debounceRef  = useRef(null);
-  const searchRef    = useRef("");   // tracks latest search value synchronously
+  const debounceRef = useRef(null);
+  const searchRef   = useRef("");
 
-  // ✅ Single useEffect — both search and page are dependencies
-  // Debounce only when search changed, fire immediately when only page changed
+  useEffect(() => {
+    dispatch(fetchUserStats());
+  }, []);
+
   useEffect(() => {
     clearTimeout(debounceRef.current);
 
@@ -26,12 +28,10 @@ function UserList() {
     searchRef.current = search;
 
     if (isSearchChange) {
-      // Wait 400ms before fetching so fast typing doesn't spam
       debounceRef.current = setTimeout(() => {
         dispatch(fetchUsers({ search, page }));
       }, 400);
     } else {
-      // Page button clicked — fetch immediately, no debounce needed
       dispatch(fetchUsers({ search, page }));
     }
 
@@ -40,16 +40,17 @@ function UserList() {
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1);  // safe now — useEffect handles both together
+    setPage(1);
   };
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.ceil(stats.total / PAGE_SIZE);
 
   const handleDelete = async (id) => {
     setDeletingId(id);
     const result = await dispatch(deleteUser(id));
     if (result.meta.requestStatus === "fulfilled") {
       toast.success("User deleted successfully.");
+      dispatch(fetchUserStats()); // refresh stats after delete
       if (users.length === 1 && page > 1) {
         setPage((p) => p - 1);
       } else {
@@ -173,7 +174,7 @@ function UserList() {
 
             <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs text-slate-400">
-                Showing {userList.length} of {totalCount} user{totalCount !== 1 ? "s" : ""}
+                Showing {userList.length} of {stats.total} user{stats.total !== 1 ? "s" : ""}
               </span>
 
               {totalPages > 1 && (

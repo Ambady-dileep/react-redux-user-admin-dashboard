@@ -48,6 +48,16 @@ class AdminUserListView(ListAPIView):
    search_fields = ['username', 'email']
    pagination_class = UserPagination
 
+class AdminUserStatsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        return Response({
+            "total": User.objects.count(),
+            "admins": User.objects.filter(is_admin=True).count(),
+            "regular": User.objects.filter(is_admin=False).count(),
+        })
+
 class AdminGetUser(generics.RetrieveAPIView):
   queryset = User.objects.all()
   serializer_class = UserSerializer

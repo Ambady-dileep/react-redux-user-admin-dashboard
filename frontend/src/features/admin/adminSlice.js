@@ -15,6 +15,18 @@ export const fetchUsers = createAsyncThunk(
   }
 );
 
+export const fetchUserStats = createAsyncThunk(
+  "admin/fetchUserStats",
+  async (_, thunkAPI) => {
+    try {
+      const res = await API.get("/users/admin/stats/");
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response.data);
+    }
+  }
+);
+
 export const deleteUser = createAsyncThunk(
   "admin/deleteUser",
   async (id, thunkAPI) => {
@@ -31,7 +43,7 @@ const adminSlice = createSlice({
   name: "admin",
   initialState: {
     users: [],
-    totalCount: 0,
+    stats: { total: 0, admins: 0, regular: 0 },
     loading: false,
     error: null,
   },
@@ -45,15 +57,16 @@ const adminSlice = createSlice({
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
         state.users = action.payload.results ?? action.payload;
-        state.totalCount = action.payload.count ?? action.payload.length;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = "Failed to fetch users";
       })
+      .addCase(fetchUserStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.users = state.users.filter((user) => user.id !== action.payload);
-        state.totalCount = Math.max(0, state.totalCount - 1);
       });
   },
 });
