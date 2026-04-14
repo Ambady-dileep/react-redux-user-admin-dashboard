@@ -44,6 +44,7 @@ const adminSlice = createSlice({
   initialState: {
     users: [],
     stats: { total: 0, admins: 0, regular: 0 },
+    searchCount: 0, 
     loading: false,
     error: null,
   },
@@ -57,6 +58,7 @@ const adminSlice = createSlice({
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
         state.users = action.payload.results ?? action.payload;
+        state.searchCount = action.payload.count ?? action.payload.length;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;

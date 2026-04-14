@@ -8,9 +8,10 @@ const PAGE_SIZE = 5;
 
 function UserList() {
   const dispatch = useDispatch();
-  const { users, loading, stats } = useSelector((state) => state.admin);
+  const { users, loading, stats, searchCount } = useSelector((state) => state.admin);
 
   const [search, setSearch]         = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [page, setPage]             = useState(1);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -38,19 +39,21 @@ function UserList() {
     return () => clearTimeout(debounceRef.current);
   }, [search, page]);
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
+const handleSearchChange = (e) => {
+  const raw = e.target.value;
+  setInputValue(raw);
+  setSearch(raw.trim());
+  setPage(1);
+};
 
-  const totalPages = Math.ceil(stats.total / PAGE_SIZE);
+  const totalPages = Math.ceil(searchCount / PAGE_SIZE);
 
   const handleDelete = async (id) => {
     setDeletingId(id);
     const result = await dispatch(deleteUser(id));
     if (result.meta.requestStatus === "fulfilled") {
       toast.success("User deleted successfully.");
-      dispatch(fetchUserStats()); // refresh stats after delete
+      dispatch(fetchUserStats());
       if (users.length === 1 && page > 1) {
         setPage((p) => p - 1);
       } else {
@@ -102,7 +105,7 @@ function UserList() {
         <input
           type="text"
           placeholder="Search users..."
-          value={search}
+          value={inputValue}
           onChange={handleSearchChange}
           className="flex-1 max-w-sm px-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 bg-white transition"
         />
@@ -174,7 +177,7 @@ function UserList() {
 
             <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs text-slate-400">
-                Showing {userList.length} of {stats.total} user{stats.total !== 1 ? "s" : ""}
+                Showing {userList.length} of {searchCount} user{searchCount !== 1 ? "s" : ""}
               </span>
 
               {totalPages > 1 && (
